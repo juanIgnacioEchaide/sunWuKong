@@ -1,5 +1,6 @@
 import { GraphQLServer } from 'graphql-yoga'
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
 import { Product, Ticket, Menu, Promo, User } from './model/models'
  
 /* TYPES QUERIES AND MUTATIONS */
@@ -8,8 +9,8 @@ const typeDefs = `
         product(id: ID): [Product!]!
         menu(id: ID): [Menu]!
         ticket(author: String): [Ticket]!
-        user(email: String!, password: String!): User!
         promo(id: ID): [Promo]!
+        login(email: String!, password: String!): User!
     }
 
     type Mutation {
@@ -72,6 +73,11 @@ const typeDefs = `
         name: String, 
         authorId: String,
     }
+
+    type AuthData {
+        userId: ID!
+        token: 
+    }
 `
 
 /* RESOLVERS FUNCTIONS */
@@ -100,9 +106,6 @@ const resolvers = {
                 return Promo.find({});
             }
              return Promo.findOne({id: args.id});
-       },
-        user(parent, args,ctx, info) {
-            return User.findOne({email:args.email, password: args.password});
        }
     },
     Mutation: {
@@ -149,8 +152,20 @@ const resolvers = {
                 name: args.name, 
                 authorId: args.authorId,
             })
+
+
             return user.save()
         },
+    },
+    login: async({ email, password }) => {
+        const user = User.findOne({email:args.email});
+        if(!user){
+            throw new Error('Uer does not exist');
+        }
+        const isEqual = await bcrypt.compare(password, user.password);
+        if( !isEqual ){
+            throw new Error('Password is incorrect, please check it and try again')
+        }
     }
 }
 
@@ -168,6 +183,15 @@ console.log('mongoose ok')
 const server = new GraphQLServer({
     typeDefs,
     resolvers,
-})
+    context: ({ req }) => {
+        const token = req.headers.authorization || '';
+
+        const user = getUser(token);
+        
+        if (!user) throw new AuthenticationError('you must be logged in');
+        
+        return { user };
+      },
+});
 
 server.start( () => {console.log('graphql-yoga running on http://localhost:4000/')})

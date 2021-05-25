@@ -49,4 +49,4 @@ const userSchema = new Schema({
     authorId: String,
 })
 
-export const Ticket = model('User',userSchema);
+export const User = model('User',userSchema);
