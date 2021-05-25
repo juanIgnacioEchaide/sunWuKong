@@ -1,6 +1,7 @@
 import { GraphQLServer } from 'graphql-yoga'
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 import { Product, Ticket, Menu, Promo, User } from './model/models'
  
 /* TYPES QUERIES AND MUTATIONS */
@@ -18,7 +19,7 @@ const typeDefs = `
         createTicket(date: String, author: String, type: String, data: [ProductInput]): Ticket
         createMenu(name: String, description: String, products: [ProductInput], price: Float): Menu
         createPromo(name: String, description: String, menus: [MenuInput], price: Float): Promo
-        createUser(email: String, password: String, name: String, authorId: String): User
+        createUser(email: String, password: String): User
     }
   
     type Product {
@@ -70,13 +71,12 @@ const typeDefs = `
         id: ID,
         email: String, 
         password: String, 
-        name: String, 
-        authorId: String,
     }
 
     type AuthData {
         userId: ID!
-        token: 
+        token: String!
+        tokenExpiration: Int!
     }
 `
 
@@ -146,14 +146,11 @@ const resolvers = {
             return promo.save()
         },
         createUser(parent, args,ctx, info){
+           const hashedPassword = bcrypt.hash(args.password, 10)
             let user = new User({
                 email: args.email, 
-                password: args.password, 
-                name: args.name, 
-                authorId: args.authorId,
+                password: hashedPassword, 
             })
-
-
             return user.save()
         },
     },
@@ -166,6 +163,11 @@ const resolvers = {
         if( !isEqual ){
             throw new Error('Password is incorrect, please check it and try again')
         }
+        const token = jwt.sign({ userId: user.id, email: user.email }, 'somesupersecretkey', {
+            expiresIn: '1h'
+        })
+
+        return { userId: user.id, token: token, tokenExpiration: 1 }
     }
 }
 
@@ -182,16 +184,7 @@ console.log('mongoose ok')
 /* STARTING LOCAL HOST SERVER */
 const server = new GraphQLServer({
     typeDefs,
-    resolvers,
-    context: ({ req }) => {
-        const token = req.headers.authorization || '';
-
-        const user = getUser(token);
-        
-        if (!user) throw new AuthenticationError('you must be logged in');
-        
-        return { user };
-      },
+    resolvers
 });
 
 server.start( () => {console.log('graphql-yoga running on http://localhost:4000/')})
