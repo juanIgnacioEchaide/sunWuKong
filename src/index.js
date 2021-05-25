@@ -2,6 +2,7 @@ import { GraphQLServer } from 'graphql-yoga'
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const isAuth = require('./middleware/is-auth.js')
 import { Product, Ticket, Menu, Promo, User } from './model/models'
  
 /* TYPES QUERIES AND MUTATIONS */
@@ -146,7 +147,10 @@ const resolvers = {
             return promo.save()
         },
         createUser(parent, args,ctx, info){
-           const hashedPassword = bcrypt.hash(args.password, 10)
+           const hashedPassword = await bcrypt.hash(args.password, 10, (err, hash) => { 
+                        if(err)
+                            throw new Error('something went wrong', err)
+            })
             let user = new User({
                 email: args.email, 
                 password: hashedPassword, 
@@ -155,11 +159,12 @@ const resolvers = {
         },
     },
     login: async({ email, password }) => {
-        const user = User.findOne({email:args.email});
+        const user = User.findOne({ email: email });
         if(!user){
             throw new Error('Uer does not exist');
         }
         const isEqual = await bcrypt.compare(password, user.password);
+
         if( !isEqual ){
             throw new Error('Password is incorrect, please check it and try again')
         }
@@ -184,7 +189,9 @@ console.log('mongoose ok')
 /* STARTING LOCAL HOST SERVER */
 const server = new GraphQLServer({
     typeDefs,
-    resolvers
+    resolvers,  
 });
+
+server.applyMiddleware({ isAuth });
 
 server.start( () => {console.log('graphql-yoga running on http://localhost:4000/')})
