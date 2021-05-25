@@ -1,0 +1,27 @@
+{
+  "name": "sun-wu-kong",
+  "version": "1.0.0",
+  "description": "fast food e-commerce",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/index.js --exec babel-node"
+  },
+  "author": "juanIgnacioEchaide",
+  "license": "MIT",
+  "dependencies": {
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "graphql-yoga": "^1.18.3",
+    "mongoose": "^5.12.3",
+    "next-redux-wrapper": "^6.0.2",
+    "nodemon": "^2.0.7",
+    "react-redux": "^7.2.4",
+    "redux": "^4.1.0",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-thunk": "^2.3.0"
+  }
+}
