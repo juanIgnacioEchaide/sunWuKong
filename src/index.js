@@ -5,14 +5,13 @@ const jwt = require('jsonwebtoken')
 const isAuth = require('./middleware/is-auth.js')
 import { Product, Ticket, Menu, Promo, User } from './model/models'
  
-/* TYPES QUERIES AND MUTATIONS */
+/* typeDefs */
 const typeDefs = `
     type Query {
         product(id: ID): [Product!]!
         menu(id: ID): [Menu]!
         ticket(author: String): [Ticket]!
         promo(id: ID): [Promo]!
-        login(email: String!, password: String!): User!
     }
 
     type Mutation {
@@ -21,6 +20,7 @@ const typeDefs = `
         createMenu(name: String, description: String, products: [ProductInput], price: Float): Menu
         createPromo(name: String, description: String, menus: [MenuInput], price: Float): Promo
         createUser(email: String, password: String): User
+        login( email: String, password: String): AuthData
     }
   
     type Product {
@@ -81,28 +81,28 @@ const typeDefs = `
     }
 `
 
-/* RESOLVERS FUNCTIONS */
+/* resolvers */
 const resolvers = {
     Query: {
-        product(parent, args,ctx, info) {
+        product(parent, args,context, info) {
             if(!args.id){
             return Product.find({});
             }
             return Product.findOne({id: args.id});
         },
-        menu(parent, args,ctx, info) {
+        menu(parent, args,context, info) {
             if(!args.id){
                 return Menu.find({});
                 }
                 return Menu.findById(args.id)
         },
-        ticket(parent, args,ctx, info) {
+        ticket(parent, args,context, info) {
             if(!args.author){
                 return Ticket.find({});
             }
              return Ticket.findOne({author: args.author});
        },
-        promo(parent, args,ctx, info) {
+        promo(parent, args,context, info) {
             if(!args.author){
                 return Promo.find({});
             }
@@ -110,7 +110,7 @@ const resolvers = {
        }
     },
     Mutation: {
-        createProduct(parent,args, ctx, info){
+        createProduct(parent,args, context, info){
             let product = new Product({
                 id: args.id,
                 description: args.description,
@@ -119,7 +119,7 @@ const resolvers = {
             });
             product.save();
         },
-        createTicket(parent, args,ctx, info){
+        createTicket(parent, args,context, info){
             let ticket = new Ticket({
                 date: args.date,
                 author: args.author,
@@ -128,7 +128,7 @@ const resolvers = {
             })
             return ticket.save()
         },
-        createMenu(parent, args,ctx, info){
+        createMenu(parent, args,context, info){
             let menu = new Menu({
                 name: args.name,
                 description: args.description,
@@ -137,7 +137,7 @@ const resolvers = {
             })
             return menu.save()
         },
-        createPromo(parent, args,ctx, info){
+        createPromo(parent, args,context, info){
             let promo = new Promo({
                 name: args.name,
                 description: args.description,
@@ -146,37 +146,40 @@ const resolvers = {
             })
             return promo.save()
         },
-        createUser(parent, args,ctx, info){
-           const hashedPassword = await bcrypt.hash(args.password, 10, (err, hash) => { 
-                        if(err)
-                            throw new Error('something went wrong', err)
-            })
+        createUser: async(parent, args, context, info) => {         
+            const hashedPassword = await bcrypt.hash(args.password, 10)
             let user = new User({
                 email: args.email, 
                 password: hashedPassword, 
             })
             return user.save()
         },
-    },
-    login: async({ email, password }) => {
-        const user = User.findOne({ email: email });
-        if(!user){
-            throw new Error('Uer does not exist');
-        }
-        const isEqual = await bcrypt.compare(password, user.password);
+        login: async( parents, args, context, info) => {
+            const userExists = User.findOne({email:args.email});
+            if(!userExists){
+                throw new Error("user doesn't exists")
+            }
 
-        if( !isEqual ){
-            throw new Error('Password is incorrect, please check it and try again')
-        }
-        const token = jwt.sign({ userId: user.id, email: user.email }, 'somesupersecretkey', {
-            expiresIn: '1h'
-        })
+            const passwordCheck = await bcrypt.compare(args.password, userExists.password)
+            const userId = (await userExists)._id
 
-        return { userId: user.id, token: token, tokenExpiration: 1 }
+            if(!passwordCheck){
+                throw new Error("password is incorrect, check it and try again")
+            }    
+
+            const token = jwt.sign({ userId: userId, email: userExists.email },'supersecretkey', {
+                        expiresIn: '1h'
+                    })
+
+            return { 
+                userId: userId, 
+                token: token, 
+                tokenExpiration: 1 }
+        }
     }
 }
 
-/* MONGOOSE CONNECTION */
+/* index */
 try {
    mongoose.connect('mongodb+srv://devuser:1111@cluster0.duiue.mongodb.net/haozi', { useNewUrlParser: true, useUnifiedTopology: true });
   } catch (error) {
@@ -186,12 +189,17 @@ mongoose.connection.once('open', function() {
 console.log('mongoose ok')
 });
 
-/* STARTING LOCAL HOST SERVER */
 const server = new GraphQLServer({
     typeDefs,
-    resolvers,  
+    resolvers,
+    context: ({ req }) => {
+        const user = { 
+            userId: "02200",
+            token: "String!",
+            tokenExpiration: 1
+        }
+    console.log(user)
+    }
 });
-
-server.applyMiddleware({ isAuth });
 
 server.start( () => {console.log('graphql-yoga running on http://localhost:4000/')})

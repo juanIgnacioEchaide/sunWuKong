@@ -42,11 +42,8 @@ const ticketSchema = new Schema({
 export const Ticket = model('Ticket', ticketSchema);
 
 const userSchema = new Schema({
-    id: Number,
     email: String, 
     password: String, 
-    name: String, 
-    authorId: String,
 })
 
 export const User = model('User',userSchema);
