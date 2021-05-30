@@ -103,6 +103,7 @@ const resolvers = {
              return Ticket.findOne({author: args.author});
        },
         promo(parent, args,context, info) {
+            console.log(context.user)
             if(!args.author){
                 return Promo.find({});
             }
@@ -155,24 +156,20 @@ const resolvers = {
             return user.save()
         },
         login: async( parents, args, context, info) => {
-            const userExists = User.findOne({email:args.email});
-            if(!userExists){
-                throw new Error("user doesn't exists")
-            }
+            const user = await User.findOne({email:args.email});
 
-            const passwordCheck = await bcrypt.compare(args.password, userExists.password)
-            const userId = (await userExists)._id
+            if(!user) throw new Error("user doesn't exists")
 
-            if(!passwordCheck){
-                throw new Error("password is incorrect, check it and try again")
-            }    
+            const passwordChecked = await bcrypt.compare(args.password, user.password)
 
-            const token = jwt.sign({ userId: userId, email: userExists.email },'supersecretkey', {
+             if(!passwordChecked) throw new Error("password is incorrect")
+
+            const token = jwt.sign({ userId: user._id, email: user.email },'supersecretkey', {
                         expiresIn: '1h'
                     })
-
+     
             return { 
-                userId: userId, 
+                userId: user._id, 
                 token: token, 
                 tokenExpiration: 1 }
         }
