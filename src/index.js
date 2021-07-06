@@ -9,46 +9,24 @@ try {
    mongoose.connect(
        'mongodb+srv://devuser:1111@cluster0.duiue.mongodb.net/haozi', 
        { useNewUrlParser: true, useUnifiedTopology: true });
-  } catch (error) {
+    } catch (error) {
     err => console.log(err);
- }
-mongoose.connection.once('open', function() {
-console.log('mongoose ok')
+    }
+    mongoose.connection.once('open', function() {
+    console.log('mongoose ok')
 });
-
 
 const server = new GraphQLServer({
     typeDefs,
     resolvers,
     context: req => {
-        const { user } = req.request.headers || '';
-        console.log(user);
+        const authToken = req.request.headers.authorization
+        console.log('REQ', authToken);
     }
+
 });
 
-server.express.use(isAuth);
 server.start( () => {
     console.log('graphql-yoga running on http://localhost:4000/')
 })
 
-/* mutation{
-    createUser(email:"mail@domain.com", password:"1234"){
-      email
-      password
-        }
-    }
-
-{
-    login(email:"mail@domain.com", password:"1234"){
-        userId
-        token
-        tokenExpiration
-    }
-} 
-
-{
-    ticket{
-        date
-    }
-}*/
-/* index */
