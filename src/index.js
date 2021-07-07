@@ -3,7 +3,6 @@ import { resolvers } from './resolvers'
 import { typeDefs  } from './typeDefs'
 import { getUserByToken } from './middleware/is-auth'
 const mongoose = require('mongoose')
-const cookieParser = require('cookie-parser')
 const isAuth = require('./middleware/is-auth.js')
 
 try {
