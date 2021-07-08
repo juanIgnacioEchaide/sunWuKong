@@ -16,10 +16,11 @@ export const resolvers = {
                 }
                 return Menu.findById(args.id)
         },
-        ticket(args,context, info) {
-            console.log(context.user)
-
-                return Ticket.find({});
+        ticket(parent, args ,context, info) {
+            if(!context.user){
+              throw new Error("You must log in")
+            }
+            return Ticket.find({});
        },
         promo(parent, args,context, info) {
             console.log("desde promo", context.user)
@@ -77,7 +78,7 @@ export const resolvers = {
         login: async( parents, args, context, info) => {
             const user = await User.findOne({email:args.email});
 
-            if(!user) throw new Error("user doesn't exists")
+            if(!user) v
 
             const passwordChecked = await bcrypt.compare(args.password, user.password)
 

@@ -21,10 +21,10 @@ const server = new GraphQLServer({
     resolvers,
     context: req => {
         const authToken = req.request.headers.authorization.split(' ')[1]
-        const user = getUserByToken(authToken)
-        if (!user) 
-            throw new AuthorizationError('you must be logged in')
-        return { user }   
+        if(authToken){
+            const user = getUserByToken(authToken)
+        return { user }
+        }
     }
 });
 
