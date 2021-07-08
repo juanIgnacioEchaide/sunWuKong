@@ -1,9 +1,8 @@
 import { GraphQLServer } from 'graphql-yoga'
 import { resolvers } from './resolvers'
 import { typeDefs  } from './typeDefs'
-import { getUserByToken } from './middleware/is-auth'
+import { extractToken, getUserByToken } from './middleware/auth-helpers'
 const mongoose = require('mongoose')
-const isAuth = require('./middleware/is-auth.js')
 
 try {
    mongoose.connect(
@@ -20,7 +19,7 @@ const server = new GraphQLServer({
     typeDefs,
     resolvers,
     context: req => {
-        const authToken = req.request.headers.authorization.split(' ')[1]
+        const authToken = extractToken(req)
         if(authToken){
             const user = getUserByToken(authToken)
         return { user }

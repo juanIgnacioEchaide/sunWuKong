@@ -9,4 +9,5 @@ export const getUserByToken = token => {
 
     return user
 }
-   
+
+export const extractToken = req => (req.request.headers.authorization.split(' ')[1])
