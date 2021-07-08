@@ -18,7 +18,7 @@ export const resolvers = {
         },
         ticket(parent, args ,context, info) {
             if(!context.user){
-              throw new Error("You must log in to see your tickets")
+              throw new Error("Please log in to see your tickets!")
             }
             /* todo return Ticket.findOne({ author: args.author }) */
             return Ticket.find({});
@@ -42,6 +42,10 @@ export const resolvers = {
             product.save();
         },
         createTicket(parent, args,context, info){
+            if(!context.user){
+                throw new Error("Please log to complete your order!")
+              }
+              
             let ticket = new Ticket({
                 date: args.date,
                 author: args.author,
