@@ -78,7 +78,7 @@ export const resolvers = {
         login: async( parents, args, context, info) => {
             const user = await User.findOne({email:args.email});
 
-            if(!user) v
+            if(!user) throw new Error("user does not exist")
 
             const passwordChecked = await bcrypt.compare(args.password, user.password)
 
