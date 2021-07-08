@@ -18,8 +18,9 @@ export const resolvers = {
         },
         ticket(parent, args ,context, info) {
             if(!context.user){
-              throw new Error("You must log in")
+              throw new Error("You must log in to see your tickets")
             }
+            /* todo return Ticket.findOne({ author: args.author }) */
             return Ticket.find({});
        },
         promo(parent, args,context, info) {
