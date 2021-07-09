@@ -13,6 +13,7 @@ export const typeDefs = `
         createPromo(name: String, description: String, menus: [MenuInput], price: Float): Promo
         createUser(email: String, password: String): User
         login( email: String, password: String): AuthData
+        refreshToken(token: String): AuthData
     }
 
     type Product {

@@ -45,7 +45,7 @@ export const resolvers = {
             if(!context.user){
                 throw new Error("Please log to complete your order!")
               }
-              
+
             let ticket = new Ticket({
                 date: args.date,
                 author: args.author,
@@ -92,12 +92,32 @@ export const resolvers = {
             const token = jwt.sign({ userId: user._id, email: user.email },'supersecretkey', {
                         expiresIn: '1h'
                     });
-
+                    
             const loggedUser = { 
                         userId: user._id, 
                         token: token, 
                         tokenExpiration: 1 }
             return loggedUser
-        }
+        },
+        refreshToken: async(parent, args,context, info) => {
+
+            const oldToken = jwt.verify(args.token, 'supersecretkey')
+            
+            const user = await User.findOne({email:oldToken.email}); 
+
+            if(!user) throw new Error("please log in again to resume your shopping")
+
+            const newToken = jwt.sign({ userId: user._id, email: user.email },'supersecretkey', {
+                expiresIn: '1h'
+            });
+
+            const refreshedUser = { 
+                userId: oldToken.userId, 
+                token: newToken, 
+                tokenExpiration: 1 }
+
+            return refreshedUser   
+           }
+           
     }
 }
