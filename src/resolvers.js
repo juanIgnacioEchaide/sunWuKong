@@ -98,6 +98,26 @@ export const resolvers = {
                         token: token, 
                         tokenExpiration: 1 }
             return loggedUser
-        }
+        },
+        refreshToken: async( parents, args, context, info) => { 
+            const oldToken = jwt.verify('supersecretkey',args.token, error => {
+                                                                throw new Error('something went wrong, please log in again ')
+                                                                })
+
+            const user = await User.findOne({email: oldToken.email});
+            
+            if(!user)
+                throw new Error('something went wrong, please log in again ')
+
+            const newToken = jwt.sign({ userId: user._id, email: user.email },'supersecretkey', {
+                    expiresIn: '1h'
+                });
+
+            const loggedUser = { 
+                        userId: user._id, 
+                        token: newToken, 
+                        tokenExpiration: 1 }
+            return loggedUser
+        },
     }
 }
